@@ -55,8 +55,8 @@ def deleteProductFromInvoice():
     global invoiceTree, totalPrice
 
     try:
-        selection = invoiceTree.selection()[0]
-        selectionValues = invoiceTree.item(selection, 'values')
+        selectedProduct = invoiceTree.selection()[0]
+        selectionValues = invoiceTree.item(selectedProduct, 'values')
         invoiceTree.delete(invoiceTree.selection()[0])
 
         totalPrice -= float(selectionValues[0])
@@ -64,6 +64,58 @@ def deleteProductFromInvoice():
         
     except IndexError:
         pass
+
+def saveChanges(selectedProduct, entries):
+    invoiceTree.item(selectedProduct, values=[e.get() for e in entries])
+
+def editProductValues():
+    global totalPrice
+
+    try:
+        selectedProduct = invoiceTree.selection()[0]
+        
+    except IndexError:
+        pass
+
+    else:
+        selectionValues = invoiceTree.item(selectedProduct, 'values')
+
+        editWindow = Toplevel(invoiceWindow)
+
+        invoiceDataFrame = Frame(editWindow, bg=WINDOW_BG, width=300)
+        invoiceDataFrame.grid(row=0, column=0, sticky='nsew')
+
+        Label(invoiceDataFrame, text='رقم المنتج',
+            bg=WINDOW_BG, fg='white', font=('', 12, 'bold')).grid(row=0, column=0, pady=(20, 10))
+        Label(invoiceDataFrame, text='اسم المنتج', 
+            bg=WINDOW_BG, fg='white', font=('', 12, 'bold')).grid(row=2, column=0, pady=10)
+        Label(invoiceDataFrame, text='السعر', 
+            bg=WINDOW_BG, fg='white', font=('', 12, 'bold')).grid(row=4, column=0, pady=10)
+        
+        numberEntry = Entry(invoiceDataFrame, width=30)
+        nameEntry = Entry(invoiceDataFrame, width=30)
+        priceEntry = Entry(invoiceDataFrame, width=30)
+        saveBtn = Button(invoiceDataFrame, btnColorStyles['process'], text='حفظ',
+                         command=lambda: saveChanges(selectedProduct, [priceEntry, nameEntry, numberEntry]))
+        
+        '''
+        السعر الاجمالي يتغير حسب السعر الجديد
+        التحقق من ان السعر المدخل عدد
+        تدمير النافذة عند الحفظ
+        '''
+
+
+        numberEntry.grid(row=1, column=0, padx=40, sticky='we')
+        nameEntry.grid(row=3, column=0, padx=40, sticky='we')
+        priceEntry.grid(row=5, column=0, padx=40, sticky='we')
+        saveBtn.grid(btnGeometry, row=6, column=0, padx=39, pady=20, sticky='we')
+
+        for e, v in zip((priceEntry, nameEntry, numberEntry), selectionValues):
+            e.insert(0, v)
+
+        editWindow.mainloop()
+
+        
 
 def openInvoicesRecord():
     global invoicesRecordWindow
@@ -84,7 +136,7 @@ def openInvoicesRecord():
     invoicesRecordWindow.mainloop()
 
 def createNewInvoice():
-    global invoiceTree, totalPriceLabel, totalPrice
+    global invoiceWindow, invoiceTree, totalPriceLabel, totalPrice
     totalPrice = 0
 
     invoiceWindow = Toplevel(window)
@@ -105,15 +157,16 @@ def createNewInvoice():
     numberEntry = Entry(invoiceDataFrame, width=30)
     nameEntry = Entry(invoiceDataFrame, width=30)
     priceEntry = Entry(invoiceDataFrame, width=30)
-    addBtn = Button(invoiceDataFrame, btnColorStyles['add'], text='إضافة')
+    addBtn = Button(invoiceDataFrame, btnColorStyles['add'], text='إضافة', command=lambda: addProductToInvoice(numberEntry, nameEntry, priceEntry))
+    editBtn = Button(invoiceDataFrame, btnColorStyles['process'], text='تعديل', command=editProductValues)
     deleteBtn = Button(invoiceDataFrame, btnColorStyles['delete'], text='حذف', command=deleteProductFromInvoice)
-    returnBtn = Button(invoiceDataFrame, btnColorStyles['process'], text='العودة', command=invoiceWindow.destroy)
+
     numberEntry.grid(row=1, column=3, columnspan=2, padx=40, sticky='we')
     nameEntry.grid(row=3, column=3, columnspan=2, padx=40, sticky='we')
     priceEntry.grid(row=5, column=3, columnspan=2, padx=40, sticky='we')
     addBtn.grid(btnGeometry, row=6, column=3, padx=(40, 5), pady=(20, 5), sticky='we')
     deleteBtn.grid(btnGeometry, row=6, column=4, padx=(5, 40), pady=(20, 5), sticky='we')
-    returnBtn.grid(btnGeometry, row=7, column=3, columnspan=2, padx=40, pady=(0, 20), sticky='we')
+    editBtn.grid(btnGeometry, row=7, column=3, columnspan=2, padx=40, pady=(0, 20), sticky='we')
 
     invoiceTree = setupTree(invoiceWindow, ('التاريخ', 'السعر', 'اسم المنتج', 'رقم المنتج'))
     invoiceTree.grid(row=0, column=0, rowspan=7, columnspan=3, sticky='nsew')
@@ -126,7 +179,6 @@ def createNewInvoice():
     totalPriceLabel = Label(totalPriceFrame, text='0', font=('', 16, 'bold'))
     totalPriceLabel.grid(row=0, column=0, sticky='nsew')
 
-    addBtn.config(command=lambda: addProductToInvoice(numberEntry, nameEntry, priceEntry))
     invoiceWindow.mainloop()
 
 window = Tk()
