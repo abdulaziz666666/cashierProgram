@@ -3,11 +3,17 @@ from tkinter.ttk import Treeview
 import datetime
 from tkinter.messagebox import showerror
 import openpyxl
+from pathlib import Path
+from os import chdir
+# import csv
 
 WINDOW_WIDTH = 400
 WINDOW_HEIGHT = 300
 WINDOW_BG = '#7A8DAB'
 todayDate = datetime.datetime.today()
+currentYear = datetime.datetime.strftime(todayDate, '%Y')
+currentMonth = datetime.datetime.strftime(todayDate, '%B')
+currentDayNumber = datetime.datetime.strftime(todayDate, '%d')
 
 btnColorStyles = {
     'add': {'bg': '#36D79A'},
@@ -130,10 +136,15 @@ def editProductValues():
 
         editWindow.mainloop()
 
-# def backupDataFromFiles()
+
 
 def saveRecordAtFile(values, currentTime):
     global totalPrice
+
+    todayDirectory = Path(f'{currentYear}/{currentMonth}/{currentDayNumber}')
+    todayDirectory.mkdir(parents=True, exist_ok=True)
+    chdir(todayDirectory)
+
     workbook = openpyxl.Workbook()
     sheetName = datetime.datetime.strftime(currentTime, '%H;%M;%S')
     worksheet = workbook.create_sheet(sheetName, 0)
