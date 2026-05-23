@@ -4,7 +4,7 @@ import datetime
 from tkinter.messagebox import showerror
 import openpyxl
 from pathlib import Path
-from os import chdir
+from os import chdir, listdir
 # import csv
 
 WINDOW_WIDTH = 400
@@ -14,6 +14,10 @@ todayDate = datetime.datetime.today()
 currentYear = datetime.datetime.strftime(todayDate, '%Y')
 currentMonth = datetime.datetime.strftime(todayDate, '%B')
 currentDayNumber = datetime.datetime.strftime(todayDate, '%d')
+
+todayDirectory = Path(f'{currentYear}/{currentMonth}/{currentDayNumber}')
+todayDirectory.mkdir(parents=True, exist_ok=True)
+chdir(todayDirectory)
 
 btnColorStyles = {
     'add': {'bg': '#36D79A'},
@@ -136,14 +140,39 @@ def editProductValues():
 
         editWindow.mainloop()
 
+def backupTodayInvoices():
+    if listdir():
+
+        todayInvoicesFiles = listdir()
+        for filename in todayInvoicesFiles:
+            invoiceWorkbook = openpyxl.load_workbook(filename=filename, read_only=True)
+            invoiceRange = invoiceWorkbook[filename.removesuffix('.xlsx')]
+
+            values = []
+            for row in invoiceRange.iter_rows(min_row=2, values_only=True):
+                values = list(row)
+
+            rowsLen = len(list(invoiceRange.iter_rows()))
+            totalPrice = invoiceRange.iter_rows(min_row=rowsLen, values_only=True)
+            totalPrice = list(totalPrice)[0]
+
+            while None in values:
+                NoneIndex = values.index(None)
+                values[NoneIndex] = ''
+            
+            # print(f'{values}\n')
+
+            currentTime = datetime.datetime.today()
+            invoiceSection = todayInvoicesTree.insert('', 'end', text=datetime.datetime.strftime(currentTime, '%H:%M:%S') + f' ({totalPrice} ريال)')
+
+            itemValues = [f'({values[0]} ريال)', values[1]]
+            print(itemValues)
+            todayInvoicesTree.insert(invoiceSection, 'end', text=' '.join([v for v in itemValues]))
+
 
 
 def saveRecordAtFile(values, currentTime):
     global totalPrice
-
-    todayDirectory = Path(f'{currentYear}/{currentMonth}/{currentDayNumber}')
-    todayDirectory.mkdir(parents=True, exist_ok=True)
-    chdir(todayDirectory)
 
     workbook = openpyxl.Workbook()
     sheetName = datetime.datetime.strftime(currentTime, '%H;%M;%S')
@@ -241,5 +270,7 @@ todayInvoicesTree.grid(row=1, column=0, sticky='nsew')
 
 newInvoiceBtn = Button(window, btnColorStyles['add'], text='فاتورة جديدة', command=createNewInvoice)
 newInvoiceBtn.grid(row=2, column=0, sticky='nsew')
+
+backupTodayInvoices()
 
 window.mainloop()
