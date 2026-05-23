@@ -52,7 +52,7 @@ def addProductToInvoice(numberEntry, nameEntry, priceEntry):
         totalPrice += float(priceEntry.get())
 
     except ValueError:
-        showerror('خطأ', 'لم تقم بإدخال السعر')
+        showerror('خطأ', 'الرجاء إدخال السعر')
 
     else:
         totalPriceLabel.config(text=str(totalPrice))
@@ -90,7 +90,7 @@ def saveChanges(selectedProduct, entries):
         newPrice = float(priceEntry.get())
 
     except ValueError:
-        showerror('خطأ', 'لم تقم بإدخال السعر')
+        showerror('خطأ', 'الرجاء إدخال السعر')
 
     else:
         oldPrice = float(selectionValues[0])
@@ -161,7 +161,6 @@ def backupTodayInvoices():
 
             for i in range(len(invoiceItems)):
                 invoiceItems[i][1] = deleteNoneDict.setdefault(invoiceItems[i][1], invoiceItems[i][1])
-            # print(f'{invoiceItems}\n')
 
             currentTime = datetime.datetime.today()
             invoiceSection = todayInvoicesTree.insert('', 'end', text=datetime.datetime.strftime(currentTime, '%H:%M:%S') + f' ({totalPrice} ريال)')
@@ -192,6 +191,11 @@ def saveRecordAtFile(values, currentTime):
 
 def saveInvoiceAtRecord(*entries: Entry):
     global totalPrice
+
+    if not invoiceTree.get_children():
+        showerror('خطأ', 'لا توجد منتجات مضافة للفاتورة')
+        return
+    
     currentTime = datetime.datetime.today()
     currentInvoiceSection = todayInvoicesTree.insert('', 'end', text=datetime.datetime.strftime(currentTime, '%H:%M:%S') + f' ({totalPrice} ريال)')
 
@@ -259,16 +263,28 @@ window.title('برنامج المحاسبة')
 window.columnconfigure(0, weight=1)
 window.rowconfigure((0, 2), weight=1)
 window.rowconfigure(1, weight=3)
-window.config(bg=WINDOW_BG)
 
 Label(window, text='سجل الفواتير اليوم ' + datetime.datetime.strftime(todayDate, '%Y/%m/%d'),
-        font=('', 16, 'bold')).grid(row=0, column=0, sticky='nsew')
+        font=('', 16, 'bold')).grid(row=0, column=0, ipadx=20, ipady=20, sticky='nsew')
 
 todayInvoicesTree = Treeview()
 todayInvoicesTree.grid(row=1, column=0, sticky='nsew')
 
 newInvoiceBtn = Button(window, btnColorStyles['add'], text='فاتورة جديدة', command=createNewInvoice)
-newInvoiceBtn.grid(row=2, column=0, sticky='nsew')
+newInvoiceBtn.grid(row=2, column=0, ipadx=10, ipady=20, sticky='nsew')
+
+# treeFrame = Frame(window)
+# treeFrame.columnconfigure((0, 1), weight=1)
+# treeFrame.grid(row=1, column=0, sticky='nsew')
+
+# todayInvoicesTree = Treeview(treeFrame)
+# todayInvoicesTree.grid(row=0, column=0, sticky='nsew')
+
+# scrollbar = Scrollbar(treeFrame, orient='vertical', command=todayInvoicesTree.yview)
+# scrollbar.grid(row=0, column=1)
+
+# todayInvoicesTree.config(yscrollcommand=scrollbar.set)
+
 
 backupTodayInvoices()
 
