@@ -142,34 +142,33 @@ def editProductValues():
 
 def backupTodayInvoices():
     if listdir():
-
         todayInvoicesFiles = listdir()
+
         for filename in todayInvoicesFiles:
             invoiceWorkbook = openpyxl.load_workbook(filename=filename, read_only=True)
             invoiceRange = invoiceWorkbook[filename.removesuffix('.xlsx')]
 
-            values = []
-            for row in invoiceRange.iter_rows(min_row=2, values_only=True):
-                values = list(row)
+            invoiceItems = []
+            rowsNumber = len(list(invoiceRange.iter_rows()))
 
-            rowsLen = len(list(invoiceRange.iter_rows()))
-            totalPrice = invoiceRange.iter_rows(min_row=rowsLen, values_only=True)
-            totalPrice = list(totalPrice)[0]
+            for row in invoiceRange.iter_rows(min_row=2, max_row=rowsNumber-1, max_col=2, values_only=True):
+                invoiceItems.append(list(row))
 
-            while None in values:
-                NoneIndex = values.index(None)
-                values[NoneIndex] = ''
-            
-            # print(f'{values}\n')
+            totalPrice = invoiceRange.iter_rows(min_row=rowsNumber, values_only=True)
+            totalPrice = list(totalPrice)[0][0] # لأنها قائمة داخلها صف فلازم نحدد الصف ثم السعر 
+
+            deleteNoneDict = {None: ''}
+
+            for i in range(len(invoiceItems)):
+                invoiceItems[i][1] = deleteNoneDict.setdefault(invoiceItems[i][1], invoiceItems[i][1])
+            # print(f'{invoiceItems}\n')
 
             currentTime = datetime.datetime.today()
             invoiceSection = todayInvoicesTree.insert('', 'end', text=datetime.datetime.strftime(currentTime, '%H:%M:%S') + f' ({totalPrice} ريال)')
 
-            itemValues = [f'({values[0]} ريال)', values[1]]
-            print(itemValues)
-            todayInvoicesTree.insert(invoiceSection, 'end', text=' '.join([v for v in itemValues]))
-
-
+            for item in invoiceItems:
+                item = [f'({item[0]} ريال)', item[1]]
+                todayInvoicesTree.insert(invoiceSection, 'end', text=' '.join([v for v in item]))
 
 def saveRecordAtFile(values, currentTime):
     global totalPrice
