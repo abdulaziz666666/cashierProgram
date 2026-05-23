@@ -18,13 +18,13 @@ btnColorStyles = {
 }
 btnGeometry = {'ipadx': 10, 'ipady': 3}
 
+
 class InvoiceWindow(Toplevel):
     def __init__(self, recordWindow):
         super().__init__(master=recordWindow)
         self.title('فاتورة جديدة')
         self.columnconfigure((0, 1, 2, 3, 4), weight=1)
         self.rowconfigure((0, 1, 2, 3, 4, 5, 6, 7, 8), weight=1)
-
         self.totalPrice = 0
 
         self.invoiceDataFrame = Frame(self, bg=WINDOW_BG, width=300)
@@ -56,6 +56,7 @@ class InvoiceWindow(Toplevel):
 
         self.totalPriceLabel = Label(self, text='0', bg='lightgrey', font=('', 16, 'bold'))
         self.totalPriceLabel.grid(row=8, column=0, columnspan=3, sticky='nsew')
+
 
     def createInvoiceTree(self, tree: Treeview):
         self.invoiceTree = tree
@@ -153,15 +154,12 @@ class InvoiceWindow(Toplevel):
 
             editWindow.mainloop()
 
-    def returnInvoiceData(self):
-        return self.savedInvoiceData
-
+    def saveData(self):
+        self.data = [self.invoiceTree.item(item, 'values') for item in self.invoiceTree.get_children()]
+    def returnData(self):
+        return self.data
     def saveInvoiceAtRecord(self):
-        invoiceItemsValues = [self.invoiceTree.item(item, 'values') for item in self.invoiceTree.get_children()]
-        date = datetime.datetime.strftime(todayDate, '%H:%M:%S')
-        
-        self.savedInvoiceData = (date, invoiceItemsValues)
-
+        self.saveData()
         self.resetEntries(self.priceEntry, self.nameEntry, self.numberEntry)
         self.invoiceTree.delete(*self.invoiceTree.get_children())
         self.totalPrice = 0
@@ -187,25 +185,22 @@ class RecordWindow(Tk):
         self.newInvoiceBtn.grid(row=2, column=0, sticky='nsew')
 
         self.invoiceWindow = None
+        self.lastInvoiceData = tuple()
 
         self.mainloop()        
 
     def createNewInvoice(self):
         self.invoiceWindow = InvoiceWindow(self)
         self.invoiceWindow.createInvoiceTree(self.setupTree(self.invoiceWindow, ('التاريخ', 'السعر', 'اسم المنتج', 'رقم المنتج')))
-
+        a = self.invoiceWindow.returnData()
         self.invoiceWindow.mainloop()
-        currentTime, invoiceItemsValues = self.invoiceWindow.returnInvoiceData()
-        print(currentTime, '\n', invoiceItemsValues)
+
+        currentTime = datetime.datetime.strftime(todayDate, '%H:%M:%S')
         self.todayInvoicesTree.insert('',
                                       'end',
                                       text=currentTime,
-                                      values=tuple(invoiceItemsValues))
+                                      values=())
         
-        '''
-        آخر مشكلة كانت أن البيانات توصل للجدول لكن ما تتخزن
-        وكأن في مشكلة في دالة انزيرت
-        '''
 
     def setupTree(self, master, columns):
         columnsWithoutFirst = [c for c in columns if columns.index(c) != 0]
@@ -219,7 +214,7 @@ class RecordWindow(Tk):
             tree.column(c, anchor='center', width=120, stretch=False)
 
         return tree
-
+    
 def main():
     recordWindow = RecordWindow('برنامج المحاسبة')
 
